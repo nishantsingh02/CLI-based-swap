@@ -1,0 +1,152 @@
+# 💱 Solana Swap Script (Jupiter Aggregator + In-Memory Wallet)
+
+This project demonstrates how to **swap SOL to USDC** on the **Solana blockchain** using the **Jupiter Aggregator API**, an **in-memory wallet**, and the **@solana/web3.js** library.
+
+---
+
+## 🚀 Features
+
+* Fetches real-time swap quotes from **Jupiter API**
+* Builds and deserializes the **swap transaction**
+* Signs transactions using an **in-memory wallet** (from private key)
+* Sends and confirms transactions on **Solana Mainnet**
+* Logs transaction details with **Solscan** explorer links
+
+---
+
+## ⚙️ Requirements
+
+Make sure you have installed:
+
+* **Node.js** (v18 or higher)
+* **npm** or **yarn**
+* A valid **Solana private key** (in base58 format)
+* A **Jupiter API endpoint** (no authentication needed)
+
+---
+
+## 📦 Installation
+
+```bash
+# Clone the repo
+git clone <your_repo_url>
+
+# Navigate to the folder
+cd <your_project_folder>
+
+# Install dependencies
+npm install
+```
+
+---
+
+## 🔐 Environment Setup
+
+Create a `.env` file in the project root and add your Solana wallet’s private key:
+
+```env
+PRIVATE_KEY=your_base58_encoded_private_key_here
+```
+
+**Note:** Never share or commit your private key publicly.
+
+---
+
+## 🧠 How It Works
+
+### 1️⃣ Get a Swap Quote
+
+Fetches a quote from Jupiter’s **lite API**:
+
+```js
+axios.get('https://lite-api.jup.ag/swap/v1/quote?inputMint=So11111111111111111111111111111111111111112&outputMint=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v&amount=100000000&slippageBps=50&restrictIntermediateTokens=true');
+```
+
+This requests a quote to **swap 0.1 SOL → USDC**.
+
+---
+
+### 2️⃣ Create the Swap Transaction
+
+Sends the quote response to Jupiter’s `/swap` endpoint to generate a serialized transaction:
+
+```js
+const { data: { swapTransaction } } = await axios.post('https://quote-api.jup.ag/v6/swap', {
+  quoteResponse,
+  userPublicKey: wallet.publicKey.toString(),
+});
+```
+
+---
+
+### 3️⃣ Deserialize and Sign
+
+The returned transaction is deserialized and signed using your **in-memory wallet**:
+
+```js
+const swapTransactionBuf = Buffer.from(swapTransaction, 'base64');
+const transaction = VersionedTransaction.deserialize(swapTransactionBuf);
+transaction.sign([wallet]);
+```
+
+---
+
+### 4️⃣ Send and Confirm
+
+The signed transaction is then broadcasted to Solana’s mainnet:
+
+```js
+const txid = await connection.sendRawTransaction(transaction.serialize(), {
+  skipPreflight: true,
+  maxRetries: 2
+});
+await connection.confirmTransaction({ blockhash, lastValidBlockHeight, signature: txid });
+```
+
+Finally, it logs the Solscan link:
+
+```js
+console.log(`https://solscan.io/tx/${txid}`);
+```
+
+---
+
+## ⚡ Usage
+
+Run the project:
+
+```bash
+node index.js
+```
+
+Expected output:
+
+* Jupiter quote response
+* Serialized transaction data
+* Solscan transaction URL
+
+---
+
+## 🧩 Tech Stack
+
+* **Node.js**
+* **Solana Web3.js**
+* **Axios**
+* **Anchor Wallet**
+* **Jupiter Aggregator API**
+* **Alchemy RPC**
+
+---
+
+## ⚠️ Notes
+
+* This script runs on **mainnet**, so real funds are involved.
+* Use at your own risk; test on **devnet** before mainnet deployment.
+* Never hardcode or expose your **private key**.
+
+---
+
+## 🧠 Author
+
+**Nishant Singh**
+Software Engineer • Web3 Enthusiast • Full Stack Developer
